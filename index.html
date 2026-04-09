@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRUESUM — Bookkeeping That Adds Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: {
+              50: '#f6f7f4',
+              100: '#ebeee6',
+              200: '#d5dbc9',
+              300: '#b4c0a0',
+              400: '#8fa476',
+              500: '#6d8654',
+              600: '#556b40',
+              700: '#435434',
+              800: '#38442c',
+              900: '#303a27',
+              950: '#171e12',
+            },
+            cream: '#faf8f4',
+            charcoal: '#1a1a1a',
+            warm: {
+              100: '#f5f3ef',
+              200: '#e8e4dc',
+              300: '#d4cec3',
+            }
+          },
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body: ['"Outfit"', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Outfit', sans-serif; background: #faf8f4; color: #1a1a1a; overflow-x: hidden; }
+
+    /* Grain texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #faf8f4; }
+    ::-webkit-scrollbar-thumb { background: #b4c0a0; border-radius: 3px; }
+
+    /* Navigation */
+    .nav-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+
+    /* Animated underline for nav links */
+    .nav-link { position: relative; }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 0; height: 1px;
+      background: #556b40;
+      transition: width 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    /* Hero heading reveal */
+    .hero-word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: wordReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes wordReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Fade up for sections */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Service card hover */
+    .service-card {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .service-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(85, 107, 64, 0.08), 0 8px 24px rgba(85, 107, 64, 0.04);
+    }
+
+    /* Button styles */
+    .btn-primary {
+      background: #435434;
+      color: #faf8f4;
+      padding: 14px 36px;
+      border-radius: 100px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, box-shadow 0.3s ease;
+      display: inline-block;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+    }
+    .btn-primary:hover {
+      background: #556b40;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(85, 107, 64, 0.2);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:focus-visible {
+      outline: 2px solid #8fa476;
+      outline-offset: 3px;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #435434;
+      padding: 14px 36px;
+      border-radius: 100px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      border: 1.5px solid #b4c0a0;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease;
+      display: inline-block;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+    }
+    .btn-outline:hover {
+      background: #ebeee6;
+      border-color: #8fa476;
+      transform: translateY(-2px);
+    }
+    .btn-outline:active { transform: translateY(0); }
+    .btn-outline:focus-visible {
+      outline: 2px solid #8fa476;
+      outline-offset: 3px;
+    }
+
+    /* Stat counter */
+    .stat-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      color: #435434;
+      line-height: 1;
+    }
+
+    /* Testimonial card */
+    .testimonial-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .testimonial-card::before {
+      content: '\201C';
+      font-family: 'DM Serif Display', serif;
+      font-size: 120px;
+      color: #d5dbc9;
+      position: absolute;
+      top: -20px;
+      left: 20px;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* Floating shapes */
+    .float-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.07;
+      pointer-events: none;
+    }
+
+    /* Number grid line */
+    .grid-line {
+      background: linear-gradient(to right, #d5dbc9, transparent);
+      height: 1px;
+    }
+
+    /* Mobile menu */
+    .mobile-menu {
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+
+    /* Logo text style matching the brand */
+    .logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      font-size: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .hero-heading { font-size: clamp(2.2rem, 8vw, 3.5rem) !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-cream/80">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="flex items-center justify-between h-20">
+        <!-- Logo -->
+        <a href="#" class="logo-text text-charcoal">TRUESUM</a>
+
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center gap-10">
+          <a href="#services" class="nav-link text-sm font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors">Services</a>
+          <a href="#about" class="nav-link text-sm font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors">About</a>
+          <a href="#testimonials" class="nav-link text-sm font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors">Testimonials</a>
+          <a href="#contact" class="btn-primary text-sm">Get Started</a>
+        </div>
+
+        <!-- Mobile Hamburger -->
+        <button id="menuBtn" class="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-sage-400" aria-label="Toggle menu">
+          <span class="block w-6 h-px bg-charcoal transition-transform duration-300" id="bar1"></span>
+          <span class="block w-6 h-px bg-charcoal transition-opacity duration-300" id="bar2"></span>
+          <span class="block w-6 h-px bg-charcoal transition-transform duration-300" id="bar3"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed top-20 right-0 bottom-0 w-72 bg-cream/95 nav-blur shadow-2xl md:hidden">
+      <div class="flex flex-col p-8 gap-6">
+        <a href="#services" class="text-lg font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors" onclick="closeMobileMenu()">Services</a>
+        <a href="#about" class="text-lg font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors" onclick="closeMobileMenu()">About</a>
+        <a href="#testimonials" class="text-lg font-light tracking-wide text-charcoal/70 hover:text-charcoal transition-colors" onclick="closeMobileMenu()">Testimonials</a>
+        <div class="grid-line mt-2"></div>
+        <a href="#contact" class="btn-primary text-center text-sm mt-2" onclick="closeMobileMenu()">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <!-- Background shapes -->
+    <div class="float-shape w-[600px] h-[600px] bg-sage-300 -top-40 -right-40" style="position:absolute;"></div>
+    <div class="float-shape w-[400px] h-[400px] bg-sage-400 bottom-20 -left-32" style="position:absolute;"></div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 w-full">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <!-- Left: Text -->
+        <div>
+          <div class="mb-6">
+            <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-600 bg-sage-100 px-4 py-2 rounded-full">Precision Bookkeeping</span>
+          </div>
+          <h1 class="hero-heading font-display text-charcoal leading-[1.1] tracking-[-0.02em]" style="font-size: clamp(2.8rem, 5vw, 4.2rem);">
+            <span class="hero-word" style="animation-delay: 0.1s;">Your</span>
+            <span class="hero-word" style="animation-delay: 0.2s;">numbers,</span><br>
+            <span class="hero-word" style="animation-delay: 0.3s;">perfectly</span>
+            <span class="hero-word text-sage-600" style="animation-delay: 0.4s;">balanced.</span>
+          </h1>
+          <p class="mt-8 text-charcoal/60 font-light leading-relaxed text-lg max-w-lg" style="line-height: 1.7;">
+            We handle the books so you can focus on what matters — growing your business with clarity and confidence.
+          </p>
+          <div class="mt-10 flex flex-wrap gap-4">
+            <a href="#contact" class="btn-primary">Book a Consultation</a>
+            <a href="#services" class="btn-outline">Our Services</a>
+          </div>
+
+          <!-- Trust indicators -->
+          <div class="mt-16 flex gap-12">
+            <div>
+              <div class="stat-number">250+</div>
+              <div class="text-xs text-charcoal/40 font-light tracking-wide mt-1">Clients Served</div>
+            </div>
+            <div>
+              <div class="stat-number">12</div>
+              <div class="text-xs text-charcoal/40 font-light tracking-wide mt-1">Years Experience</div>
+            </div>
+            <div>
+              <div class="stat-number">99%</div>
+              <div class="text-xs text-charcoal/40 font-light tracking-wide mt-1">Accuracy Rate</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Video Visual -->
+        <div class="relative hidden lg:block">
+          <div class="relative">
+            <div class="w-full aspect-[4/5] rounded-3xl overflow-hidden" style="box-shadow: 0 40px 80px rgba(85,107,64,0.1), 0 16px 32px rgba(85,107,64,0.06);">
+              <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                <source src="brand_assets/8479048-uhd_3840_2160_25fps.mp4" type="video/mp4">
+              </video>
+              <!-- Subtle overlay for depth -->
+              <div class="absolute inset-0 bg-gradient-to-t from-sage-950/30 via-transparent to-sage-950/10"></div>
+            </div>
+            <!-- Floating card -->
+            <div class="absolute -bottom-6 -left-6 bg-white rounded-2xl p-6 shadow-lg" style="box-shadow: 0 20px 60px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03);">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-charcoal">Books Reconciled</div>
+                  <div class="text-xs text-charcoal/40 font-light">March 2026 — Complete</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="py-32 relative">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="fade-up text-center max-w-2xl mx-auto mb-20">
+        <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-600 mb-4">What We Do</span>
+        <h2 class="font-display text-charcoal tracking-[-0.02em]" style="font-size: clamp(2rem, 4vw, 3rem);">Services built around<br><span class="text-sage-600">your business</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.05s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Monthly Bookkeeping</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">Accurate, timely recording of all transactions. Bank reconciliations, categorization, and clean books — every month.</p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.1s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Financial Reporting</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">Custom profit & loss statements, balance sheets, and cash flow reports that give you a clear picture of your business health.</p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.15s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Tax Preparation</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">Year-round tax-ready books and seamless handoff to your CPA. Maximize deductions with organized, accurate records.</p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.2s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Payroll Services</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">End-to-end payroll processing, tax filings, and compliance. Your team gets paid on time, every time.</p>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.25s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Accounts Receivable</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">Invoice management, payment tracking, and follow-ups to keep your cash flow healthy and predictable.</p>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="fade-up service-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.3s;">
+          <div class="w-12 h-12 rounded-xl bg-sage-50 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-xl text-charcoal mb-3">Catch-Up Bookkeeping</h3>
+          <p class="text-charcoal/50 font-light leading-relaxed text-sm" style="line-height: 1.7;">Behind on your books? We'll get you caught up — organizing months or even years of financial records with precision.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About / Why Section -->
+  <section id="about" class="py-32 bg-sage-950 relative overflow-hidden">
+    <!-- Subtle gradient orb -->
+    <div class="absolute top-0 right-0 w-[800px] h-[800px] rounded-full opacity-[0.06]" style="background: radial-gradient(circle, #8fa476 0%, transparent 70%);"></div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="grid lg:grid-cols-2 gap-20 items-center">
+        <div class="fade-up">
+          <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-400 mb-4">Why TRUESUM</span>
+          <h2 class="font-display text-white tracking-[-0.02em] leading-[1.15]" style="font-size: clamp(2rem, 4vw, 3rem);">
+            Numbers tell a story.<br><span class="text-sage-400">We make sure it's accurate.</span>
+          </h2>
+          <p class="mt-8 text-white/50 font-light leading-relaxed text-lg" style="line-height: 1.7;">
+            Every transaction matters. Every decimal counts. At TRUESUM, we combine meticulous attention to detail with modern tools to deliver bookkeeping you can trust completely.
+          </p>
+          <div class="mt-10 grid grid-cols-2 gap-6">
+            <div class="border border-white/10 rounded-xl p-5">
+              <div class="font-display text-sage-400 text-lg mb-2">Dedicated Team</div>
+              <p class="text-white/40 text-sm font-light" style="line-height: 1.6;">A named bookkeeper who knows your business inside and out.</p>
+            </div>
+            <div class="border border-white/10 rounded-xl p-5">
+              <div class="font-display text-sage-400 text-lg mb-2">Cloud-First</div>
+              <p class="text-white/40 text-sm font-light" style="line-height: 1.6;">QuickBooks, Xero, FreshBooks — we work on your platform.</p>
+            </div>
+            <div class="border border-white/10 rounded-xl p-5">
+              <div class="font-display text-sage-400 text-lg mb-2">Transparent Pricing</div>
+              <p class="text-white/40 text-sm font-light" style="line-height: 1.6;">Fixed monthly rates. No surprise fees. No hidden charges.</p>
+            </div>
+            <div class="border border-white/10 rounded-xl p-5">
+              <div class="font-display text-sage-400 text-lg mb-2">Tax-Ready</div>
+              <p class="text-white/40 text-sm font-light" style="line-height: 1.6;">Books organized year-round so tax season is stress-free.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right visual -->
+        <div class="fade-up hidden lg:block">
+          <div class="relative">
+            <div class="w-full aspect-[4/5] rounded-3xl overflow-hidden" style="background: linear-gradient(160deg, #303a27, #435434, #303a27);">
+              <video autoplay muted loop playsinline class="w-full h-full object-cover mix-blend-luminosity opacity-50">
+                <source src="brand_assets/7552482-hd_1920_1080_25fps.mp4" type="video/mp4">
+              </video>
+              <div class="absolute inset-0 bg-gradient-to-t from-sage-950/80 via-transparent to-transparent"></div>
+            </div>
+            <!-- Floating stat -->
+            <div class="absolute -bottom-4 -right-4 bg-sage-600 rounded-2xl p-6 text-white" style="box-shadow: 0 20px 60px rgba(85,107,64,0.3);">
+              <div class="font-display text-3xl">$2.4M+</div>
+              <div class="text-sage-200 text-xs font-light tracking-wide mt-1">Tax savings found for clients</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process Section -->
+  <section class="py-32">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="fade-up text-center max-w-2xl mx-auto mb-20">
+        <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-600 mb-4">How It Works</span>
+        <h2 class="font-display text-charcoal tracking-[-0.02em]" style="font-size: clamp(2rem, 4vw, 3rem);">Getting started is<br><span class="text-sage-600">simple</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="fade-up text-center">
+          <div class="w-16 h-16 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-sage-700 text-xl">01</span>
+          </div>
+          <h3 class="font-display text-lg text-charcoal mb-3">Discovery Call</h3>
+          <p class="text-charcoal/50 font-light text-sm" style="line-height: 1.7;">We learn about your business, your current books, and what you need to move forward.</p>
+        </div>
+        <div class="fade-up text-center" style="transition-delay: 0.1s;">
+          <div class="w-16 h-16 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-sage-700 text-xl">02</span>
+          </div>
+          <h3 class="font-display text-lg text-charcoal mb-3">Custom Plan</h3>
+          <p class="text-charcoal/50 font-light text-sm" style="line-height: 1.7;">We build a tailored bookkeeping plan with clear scope, pricing, and timeline.</p>
+        </div>
+        <div class="fade-up text-center" style="transition-delay: 0.2s;">
+          <div class="w-16 h-16 rounded-full bg-sage-100 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-sage-700 text-xl">03</span>
+          </div>
+          <h3 class="font-display text-lg text-charcoal mb-3">Clean Books</h3>
+          <p class="text-charcoal/50 font-light text-sm" style="line-height: 1.7;">Sit back while we handle your books. Monthly reports, always on time, always accurate.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="py-32 bg-warm-100">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="fade-up text-center max-w-2xl mx-auto mb-20">
+        <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-600 mb-4">Client Stories</span>
+        <h2 class="font-display text-charcoal tracking-[-0.02em]" style="font-size: clamp(2rem, 4vw, 3rem);">Trusted by businesses<br><span class="text-sage-600">that grow</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="fade-up testimonial-card bg-white rounded-2xl p-8 border border-warm-200/60">
+          <p class="text-charcoal/60 font-light text-sm relative z-10 mb-6" style="line-height: 1.7;">"TRUESUM transformed our financial operations. We went from dreading tax season to actually understanding our numbers. They're meticulous and proactive."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center">
+              <span class="font-display text-sage-700 text-sm">SM</span>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-charcoal">Sarah Mitchell</div>
+              <div class="text-xs text-charcoal/40 font-light">CEO, Bloom Studio</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-up testimonial-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.1s;">
+          <p class="text-charcoal/60 font-light text-sm relative z-10 mb-6" style="line-height: 1.7;">"Finally, a bookkeeper who communicates clearly and delivers on time. Our monthly reports are clean, detailed, and actually useful for decision-making."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center">
+              <span class="font-display text-sage-700 text-sm">JR</span>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-charcoal">James Rivera</div>
+              <div class="text-xs text-charcoal/40 font-light">Founder, Meridian Tech</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fade-up testimonial-card bg-white rounded-2xl p-8 border border-warm-200/60" style="transition-delay: 0.2s;">
+          <p class="text-charcoal/60 font-light text-sm relative z-10 mb-6" style="line-height: 1.7;">"We were three years behind on our books. TRUESUM caught us up in weeks and set up a system that keeps us current. Absolute lifesavers."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center">
+              <span class="font-display text-sage-700 text-sm">AL</span>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-charcoal">Amanda Liu</div>
+              <div class="text-xs text-charcoal/40 font-light">Owner, Golden Gate Eats</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section id="contact" class="py-32 relative overflow-hidden">
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse at center, #ebeee6 0%, #faf8f4 70%);"></div>
+    <div class="max-w-3xl mx-auto px-6 lg:px-12 relative z-10">
+      <div class="fade-up text-center">
+        <span class="inline-block text-xs font-medium tracking-[0.2em] uppercase text-sage-600 mb-4">Let's Talk</span>
+        <h2 class="font-display text-charcoal tracking-[-0.02em]" style="font-size: clamp(2rem, 4vw, 3rem);">Ready to get your<br><span class="text-sage-600">books in order?</span></h2>
+        <p class="mt-6 text-charcoal/50 font-light text-lg max-w-lg mx-auto" style="line-height: 1.7;">
+          Schedule a free consultation. We'll review your needs and build a plan — no pressure, no commitment.
+        </p>
+
+        <!-- Simple contact form -->
+        <form class="mt-12 max-w-md mx-auto text-left" onsubmit="event.preventDefault(); this.innerHTML = '<div class=\'text-center py-8\'><div class=\'font-display text-sage-600 text-xl mb-2\'>Thank you!</div><p class=\'text-charcoal/50 font-light text-sm\'>We\'ll be in touch within 24 hours.</p></div>'; ">
+          <div class="space-y-4">
+            <div>
+              <input type="text" placeholder="Your name" required
+                class="w-full px-5 py-3.5 rounded-xl bg-white border border-warm-200 text-charcoal text-sm font-light placeholder:text-charcoal/30 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-400/20 transition-all duration-200">
+            </div>
+            <div>
+              <input type="email" placeholder="Email address" required
+                class="w-full px-5 py-3.5 rounded-xl bg-white border border-warm-200 text-charcoal text-sm font-light placeholder:text-charcoal/30 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-400/20 transition-all duration-200">
+            </div>
+            <div>
+              <textarea placeholder="Tell us about your business..." rows="4"
+                class="w-full px-5 py-3.5 rounded-xl bg-white border border-warm-200 text-charcoal text-sm font-light placeholder:text-charcoal/30 focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-400/20 transition-all duration-200 resize-none"></textarea>
+            </div>
+            <button type="submit" class="btn-primary w-full text-center">Send Message</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-16 border-t border-warm-200">
+    <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="grid md:grid-cols-4 gap-12">
+        <div class="md:col-span-2">
+          <div class="logo-text text-charcoal mb-4">TRUESUM</div>
+          <p class="text-charcoal/40 font-light text-sm max-w-sm" style="line-height: 1.7;">Precision bookkeeping for growing businesses. Your numbers, perfectly balanced.</p>
+        </div>
+        <div>
+          <h4 class="text-xs font-medium tracking-[0.15em] uppercase text-charcoal/60 mb-4">Services</h4>
+          <div class="flex flex-col gap-2.5">
+            <a href="#services" class="text-sm font-light text-charcoal/40 hover:text-charcoal transition-colors">Monthly Bookkeeping</a>
+            <a href="#services" class="text-sm font-light text-charcoal/40 hover:text-charcoal transition-colors">Financial Reporting</a>
+            <a href="#services" class="text-sm font-light text-charcoal/40 hover:text-charcoal transition-colors">Tax Preparation</a>
+            <a href="#services" class="text-sm font-light text-charcoal/40 hover:text-charcoal transition-colors">Payroll Services</a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-xs font-medium tracking-[0.15em] uppercase text-charcoal/60 mb-4">Contact</h4>
+          <div class="flex flex-col gap-2.5">
+            <span class="text-sm font-light text-charcoal/40">hello@truesum.com</span>
+            <span class="text-sm font-light text-charcoal/40">(555) 123-4567</span>
+            <span class="text-sm font-light text-charcoal/40">Mon — Fri, 9am — 6pm</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-12 pt-8 border-t border-warm-200 flex flex-col md:flex-row justify-between items-center gap-4">
+        <span class="text-xs text-charcoal/30 font-light">&copy; 2026 TRUESUM. All rights reserved.</span>
+        <div class="flex gap-6">
+          <a href="#" class="text-xs text-charcoal/30 font-light hover:text-charcoal transition-colors">Privacy Policy</a>
+          <a href="#" class="text-xs text-charcoal/30 font-light hover:text-charcoal transition-colors">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const bar1 = document.getElementById('bar1');
+    const bar2 = document.getElementById('bar2');
+    const bar3 = document.getElementById('bar3');
+    let menuOpen = false;
+
+    menuBtn.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      mobileMenu.classList.toggle('open');
+      if (menuOpen) {
+        bar1.style.transform = 'rotate(45deg) translate(3px, 3px)';
+        bar2.style.opacity = '0';
+        bar3.style.transform = 'rotate(-45deg) translate(3px, -3px)';
+      } else {
+        bar1.style.transform = '';
+        bar2.style.opacity = '1';
+        bar3.style.transform = '';
+      }
+    });
+
+    function closeMobileMenu() {
+      menuOpen = false;
+      mobileMenu.classList.remove('open');
+      bar1.style.transform = '';
+      bar2.style.opacity = '1';
+      bar3.style.transform = '';
+    }
+
+    // Intersection Observer for fade-up animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // Smooth nav background on scroll
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+        nav.style.borderBottom = '1px solid rgba(212, 206, 195, 0.3)';
+      } else {
+        nav.style.borderBottom = '1px solid transparent';
+      }
+    });
+  </script>
+</body>
+</html>
